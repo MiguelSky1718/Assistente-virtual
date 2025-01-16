@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chatbot para Advocacia</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f7fa;
+      margin: 0;
+      padding: 0;
+    }
+
+    .chat-container {
+      width: 350px;
+      height: 500px;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      border-radius: 15px;
+      overflow: hidden;
+      background-color: #ffffff;
+      display: none;
+      flex-direction: column;
+      border: 1px solid #ddd;
+      z-index: 1000;
+    }
+
+    .chat-header {
+      background-color: #0056b3;
+      color: #ffffff;
+      padding: 15px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 18px;
+      border-bottom: 2px solid #004494;
+      position: relative;
+    }
+
+    .chat-close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 20px;
+      cursor: pointer;
+      color: #ffffff;
+    }
+
+    .chat-body {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      background-color: #f9fbfd;
+    }
+
+    .chat-message {
+      margin: 10px 0;
+      padding: 10px 15px;
+      border-radius: 20px;
+      width: fit-content;
+      max-width: 80%;
+      font-size: 14px;
+      line-height: 1.4;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .chat-message.bot {
+      background-color: #e6f0ff;
+      align-self: flex-start;
+      color: #004494;
+    }
+
+    .chat-message.user {
+      background-color: #d1ffd6;
+      align-self: flex-end;
+      color: #045d0d;
+    }
+
+    .chat-input {
+      display: flex;
+      padding: 15px;
+      background-color: #ffffff;
+      border-top: 1px solid #ddd;
+    }
+
+    .chat-input input {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      outline: none;
+      font-size: 14px;
+    }
+
+    .chat-input button {
+      background-color: #0056b3;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      margin-left: 10px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container" id="chatContainer">
+    <div class="chat-header">Beatriz - Assistente Jurídica <span class="chat-close" onclick="toggleChat()">&#10006;</span></div>
+    <div class="chat-body" id="chatBody">
+      <div class="chat-message bot">Olá! Como posso ajudar você hoje?</div>
+    </div>
+    <div class="chat-input">
+      <input type="text" id="userInput" placeholder="Digite sua mensagem aqui...">
+      <button onclick="sendMessage()">Enviar</button>
+    </div>
+  </div>
+
+  <div class="chat-toggle" id="chatToggle" onclick="toggleChat()" style="width: 60px; height: 60px; position: fixed; bottom: 20px; right: 20px; background-color: #0056b3; border-radius: 50%; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 1001;">
+    <img src="https://cdn-icons-png.flaticon.com/512/4712/4712027.png" alt="Chat Icon" style="width: 30px; height: 30px;">
+  </div>
+
+  <script>
+    const responses = {
+      "quero saber sobre aposentadoria": "Até 13/11/2019, a aposentadoria por tempo de contribuição exigia 35 anos para homens e 30 anos para mulheres. Com a EC 103/2019, novas regras foram criadas. Nossa equipe está pronta para ajudar!",
+      "quero saber sobre os benefícios por incapacidade": "Auxílio por Incapacidade Temporária, Auxílio Acidente e Aposentadoria por Incapacidade Permanente. O INSS realiza pente-fino nesses benefícios. Nossa equipe está pronta para ajudar!",
+      "quero saber sobre os benefícios assistenciais": "Benefício Assistencial ao Idoso e ao Deficiente garantem um salário mínimo para quem comprovar necessidade. Nossa equipe está pronta para ajudar!",
+      "quero saber sobre a revisão de benefícios": "O INSS pode errar no cálculo do benefício. A Revisão da Vida Toda pode ser uma solução. Fale conosco para mais informações!",
+      "quero saber sobre o planejamento previdenciário": "O Planejamento Previdenciário é essencial para programar a concessão da aposentadoria, garantindo as melhores condições e o momento ideal para se aposentar. Planejar a aposentadoria é a melhor forma de garantir um benefício mais vantajoso. Nossa equipe está pronta para ajudar você!",
+      "quero saber sobre as causas tributárias": "A alta carga tributária no Brasil dificulta o crescimento das empresas. O escritório Molina Porto Advogados oferece suporte especializado em planejamento tributário, recuperação de créditos tributários e atuação no contencioso administrativo e judicial. Consulte-nos!",
+      "default": "Desculpe, não entendi sua pergunta. Pode reformular, por favor?"
+    };
+
+    function toggleChat() {
+      const chatContainer = document.getElementById("chatContainer");
+      const chatToggle = document.getElementById("chatToggle");
+
+      if (chatContainer.style.display === "none" || chatContainer.style.display === "") {
+        chatContainer.style.display = "flex";
+        chatToggle.style.display = "none";
+      } else {
+        chatContainer.style.display = "none";
+        chatToggle.style.display = "flex";
+      }
+    }
+
+    function sendMessage() {
+      const userInput = document.getElementById("userInput").value.toLowerCase();
+      const chatBody = document.getElementById("chatBody");
+
+      if (userInput.trim() !== "") {
+        const userMessage = document.createElement("div");
+        userMessage.className = "chat-message user";
+        userMessage.textContent = userInput;
+        chatBody.appendChild(userMessage);
+
+        const botMessage = document.createElement("div");
+        botMessage.className = "chat-message bot";
+        botMessage.textContent = responses[userInput] || responses.default;
+        chatBody.appendChild(botMessage);
+
+        document.getElementById("userInput").value = "";
+        chatBody.scrollTop = chatBody.scrollHeight;
+      }
+    }
+  </script>
+</body>
+</html>
+
+</html>
